@@ -7,113 +7,201 @@ from config import apikey
 import datetime
 import random
 import numpy as np
+import pygame  # Add this import for music functionality
 
+# Initialize pygame mixer
+try:
+    pygame.mixer.init()
+except Exception as e:
+    print(f"Error initializing pygame mixer: {e}")
 
 chatStr = ""
-# https://youtu.be/Z3ZAJoi4x6Q
-def chat(query):
-    global chatStr
-    print(chatStr)
-    openai.api_key = apikey
-    chatStr += f"Sir: {query}\n Jarvis: "
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt= chatStr,
-        temperature=0.7,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    # todo: Wrap this inside of a  try catch block
-    say(response["choices"][0]["text"])
-    chatStr += f"{response['choices'][0]['text']}\n"
-    return response["choices"][0]["text"]
 
+def chat(query):
+    """Handles chat functionality using OpenAI."""
+    global chatStr
+    try:
+        print(chatStr)
+        openai.api_key = apikey
+        chatStr += f"Sir: {query}\n Jarvis: "
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=chatStr,
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        say(response["choices"][0]["text"])
+        chatStr += f"{response['choices'][0]['text']}\n"
+        return response["choices"][0]["text"]
+    except Exception as e:
+        say("Sorry, I encountered an error while processing your request.")
+        print(f"Error in chat function: {e}")
+        return "Error occurred in chat."
 
 def ai(prompt):
-    openai.api_key = apikey
-    text = f"OpenAI response for Prompt: {prompt} \n *************************\n\n"
+    """Handles AI-based responses using OpenAI."""
+    try:
+        openai.api_key = apikey
+        text = f"OpenAI response for Prompt: {prompt} \n *************************\n\n"
 
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=prompt,
-        temperature=0.7,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    # todo: Wrap this inside of a  try catch block
-    # print(response["choices"][0]["text"])
-    text += response["choices"][0]["text"]
-    if not os.path.exists("Openai"):
-        os.mkdir("Openai")
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        text += response["choices"][0]["text"]
+        if not os.path.exists("Openai"):
+            os.mkdir("Openai")
 
-    # with open(f"Openai/prompt- {random.randint(1, 2343434356)}", "w") as f:
-    with open(f"Openai/{''.join(prompt.split('intelligence')[1:]).strip() }.txt", "w") as f:
-        f.write(text)
+        with open(f"Openai/{''.join(prompt.split('intelligence')[1:]).strip() }.txt", "w") as f:
+            f.write(text)
+    except Exception as e:
+        say("Sorry, I encountered an error while processing your AI request.")
+        print(f"Error in ai function: {e}")
 
 def say(text):
-    os.system(f'say "{text}"')
+    """Uses the system's text-to-speech functionality."""
+    try:
+        os.system(f'say "{text}"')
+    except Exception as e:
+        print(f"Error in say function: {e}")
 
 def takeCommand():
+    """Listens to the user's voice command and converts it to text."""
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        # r.pause_threshold =  0.6
-        audio = r.listen(source)
         try:
+            print("Listening...")
+            audio = r.listen(source)
             print("Recognizing...")
             query = r.recognize_google(audio, language="en-in")
             print(f"User said: {query}")
             return query
+        except sr.UnknownValueError:
+            say("Sorry, I did not understand that.")
+            return "Sorry, I did not understand that."
+        except sr.RequestError as e:
+            say("Sorry, there was an issue with the speech recognition service.")
+            print(f"Speech recognition error: {e}")
+            return "Speech recognition error."
         except Exception as e:
-            return "Some Error Occurred. Sorry from Jarvis"
+            say("An error occurred while taking your command.")
+            print(f"Error in takeCommand function: {e}")
+            return "Some error occurred."
+
+def playMusic(song_path):
+    """Plays the specified music file."""
+    try:
+        pygame.mixer.music.load(song_path)
+        pygame.mixer.music.play()
+        say("Playing music, sir.")
+    except FileNotFoundError:
+        say("Sorry, the music file was not found.")
+        print(f"File not found: {song_path}")
+    except pygame.error as e:
+        say("Sorry, I couldn't play the music.")
+        print(f"Pygame error: {e}")
+    except Exception as e:
+        say("An unexpected error occurred while playing music.")
+        print(f"Error in playMusic function: {e}")
+
+def stopMusic():
+    """Stops the currently playing music."""
+    try:
+        pygame.mixer.music.stop()
+        say("Music stopped, sir.")
+    except pygame.error as e:
+        say("Sorry, I couldn't stop the music.")
+        print(f"Pygame error: {e}")
+    except Exception as e:
+        say("An unexpected error occurred while stopping music.")
+        print(f"Error in stopMusic function: {e}")
+
+def introduceYourself():
+    """Introduces J.A.R.V.I.S. to the user."""
+    try:
+        introduction = (
+            "Hello Sir, I am J.A.R.V.I.S., your personal AI assistant. "
+            "I can help you with tasks such as playing music, fetching the time, "
+            "opening applications, and answering your queries using artificial intelligence. "
+            "How can I assist you today?"
+        )
+        say(introduction)
+        print(introduction)
+    except Exception as e:
+        say("Sorry, I encountered an error while introducing myself.")
+        print(f"Error in introduceYourself function: {e}")
 
 if __name__ == '__main__':
-    print('Welcome to Jarvis A.I')
-    say("Jarvis A.I")
-    while True:
-        print("Listening...")
-        query = takeCommand()
-        # todo: Add more sites
-        sites = [["youtube", "https://www.youtube.com"], ["wikipedia", "https://www.wikipedia.com"], ["google", "https://www.google.com"],]
-        for site in sites:
-            if f"Open {site[0]}".lower() in query.lower():
-                say(f"Opening {site[0]} sir...")
-                webbrowser.open(site[1])
-        # todo: Add a feature to play a specific song
-        if "open music" in query:
-            musicPath = "/Users/harry/Downloads/downfall-21371.mp3"
-            os.system(f"open {musicPath}")
+    try:
+        print('Welcome to Jarvis A.I')
+        say("Hello Sir, I am Jarvis. How can I help you today?")
+        while True:
+            query = takeCommand()
+            # todo: Add more sites
+            sites = [["youtube", "https://www.youtube.com"], ["wikipedia", "https://www.wikipedia.com"], ["google", "https://www.google.com"],]
+            for site in sites:
+                if f"Open {site[0]}".lower() in query.lower():
+                    say(f"Opening {site[0]} sir...")
+                    webbrowser.open(site[1])
 
-        elif "the time" in query:
-            musicPath = "/Users/harry/Downloads/downfall-21371.mp3"
-            hour = datetime.datetime.now().strftime("%H")
-            min = datetime.datetime.now().strftime("%M")
-            say(f"Sir time is {hour} bajke {min} minutes")
+            if "play music" in query.lower():
+                playMusic("music/back_in_black_intro.mp3")
 
-        elif "open facetime".lower() in query.lower():
-            os.system(f"open /System/Applications/FaceTime.app")
+            elif "stop music" in query.lower():
+                stopMusic()
 
-        elif "open pass".lower() in query.lower():
-            os.system(f"open /Applications/Passky.app")
+            elif "introduce yourself" in query.lower():
+                introduceYourself()
 
-        elif "Using artificial intelligence".lower() in query.lower():
-            ai(prompt=query)
+            elif "the time" in query:
+                try:
+                    hour = datetime.datetime.now().strftime("%H")
+                    minute = datetime.datetime.now().strftime("%M")
+                    say(f"Sir, the time is {hour} hours and {minute} minutes.")
+                except Exception as e:
+                    say("Sorry, I couldn't fetch the time.")
+                    print(f"Error fetching time: {e}")
 
-        elif "Jarvis Quit".lower() in query.lower():
-            exit()
+            elif "open facetime".lower() in query.lower():
+                try:
+                    os.system(f"open /System/Applications/FaceTime.app")
+                except Exception as e:
+                    say("Sorry, I couldn't open FaceTime.")
+                    print(f"Error opening FaceTime: {e}")
 
-        elif "reset chat".lower() in query.lower():
-            chatStr = ""
+            elif "open pass".lower() in query.lower():
+                try:
+                    os.system(f"open /Applications/Passky.app")
+                except Exception as e:
+                    say("Sorry, I couldn't open Passky.")
+                    print(f"Error opening Passky: {e}")
 
-        else:
-            print("Chatting...")
-            chat(query)
+            elif "Using artificial intelligence".lower() in query.lower():
+                ai(prompt=query)
 
+            elif "Jarvis Quit".lower() in query.lower():
+                say("Goodbye, Sir.")
+                exit()
 
+            elif "reset chat".lower() in query.lower():
+                chatStr = ""
+                say("Chat history has been reset.")
 
+            else:
+                print("Chatting...")
+                chat(query)
 
-
-        # say(query)
+    except KeyboardInterrupt:
+        say("Goodbye, Sir.")
+        print("Exiting Jarvis A.I.")
+    except Exception as e:
+        say("An unexpected error occurred. Exiting now.")
+        print(f"Unexpected error in main loop: {e}")
