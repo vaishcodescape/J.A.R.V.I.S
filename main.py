@@ -133,14 +133,20 @@ def stopMusic():
         say("An unexpected error occurred while stopping music.")
         print(f"Error in stopMusic function: {e}")
 
+def cleanup():
+    """Stops the music and performs cleanup before exiting."""
+    try:
+        pygame.mixer.music.stop()  # Stop any playing music
+        pygame.mixer.quit()  # Quit the pygame mixer
+        print("Cleanup completed. Exiting program.")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
 def introduceYourself():
     """Introduces J.A.R.V.I.S. to the user."""
     try:
         introduction = (
-            "Hello Sir, I am J.A.R.V.I.S., your personal AI assistant. "
-            "I can help you with tasks such as playing music, fetching the time, "
-            "opening applications, and answering your queries using artificial intelligence. "
-            "How can I assist you today?"
+            """“Greetings. I am J.A.R.V.I.S., Just A Rather Very Intelligent System – your personal AI assistant, designed to simplify tasks, answer queries, and keep you ahead of the curve. How may I assist you today, Sir?”"""
         )
         say(introduction)
         print(introduction)
@@ -198,6 +204,7 @@ if __name__ == '__main__':
 
             elif "Jarvis Quit".lower() in query.lower():
                 say("Goodbye, Sir.")
+                cleanup()
                 exit()
 
             elif "reset chat".lower() in query.lower():
@@ -210,7 +217,9 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         say("Goodbye, Sir.")
+        cleanup()
         print("Exiting Jarvis A.I.")
     except Exception as e:
         say("An unexpected error occurred. Exiting now.")
+        cleanup()
         print(f"Unexpected error in main loop: {e}")
