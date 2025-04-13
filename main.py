@@ -1,13 +1,11 @@
-#J.A.R.V.I.S A.I Speech Assistant
+# J.A.R.V.I.S A.I Speech Assistant
 import speech_recognition as sr
 import os
 import webbrowser
 import openai
 from config import apikey
 import datetime
-import random
-import numpy as np
-import pygame  # Add this import for music functionality
+import pygame  # For music functionality
 
 # Initialize pygame mixer
 try:
@@ -33,9 +31,10 @@ def chat(query):
             frequency_penalty=0,
             presence_penalty=0
         )
-        say(response["choices"][0]["text"])
-        chatStr += f"{response['choices'][0]['text']}\n"
-        return response["choices"][0]["text"]
+        response_text = response["choices"][0]["text"]
+        say(response_text)
+        chatStr += f"{response_text}\n"
+        return response_text
     except Exception as e:
         say("Sorry, I encountered an error while processing your request.")
         print(f"Error in chat function: {e}")
@@ -60,7 +59,7 @@ def ai(prompt):
         if not os.path.exists("Openai"):
             os.mkdir("Openai")
 
-        with open(f"Openai/{''.join(prompt.split('intelligence')[1:]).strip() }.txt", "w") as f:
+        with open(f"Openai/{''.join(prompt.split('intelligence')[1:]).strip()}.txt", "w") as f:
             f.write(text)
     except Exception as e:
         say("Sorry, I encountered an error while processing your AI request.")
@@ -100,8 +99,8 @@ def playMusic(song_name):
     """Plays the specified music file from the 'music' directory."""
     try:
         # Define the path to the music directory
-        music_directory = os.path.join(os.getcwd(), "music")  # Ensure 'music' folder exists in the current directory
-        song_path = os.path.join("music","music/back_in_black_intro.mp3")  # Combine directory and song name to form full path
+        music_directory = os.path.join(os.getcwd(), "/Users/avaish/J.A.R.V.I.S/music")
+        song_path = os.path.join("/Users/avaish/J.A.R.V.I.S/music", "/Users/avaish/J.A.R.V.I.S/music/back_in_black_intro.mp3")
 
         # Check if the file exists
         if not os.path.exists(song_path):
@@ -146,7 +145,9 @@ def introduceYourself():
     """Introduces J.A.R.V.I.S. to the user."""
     try:
         introduction = (
-            """“Greetings. I am J.A.R.V.I.S., Just A Rather Very Intelligent System – your personal AI assistant, designed to simplify tasks, answer queries, and keep you ahead of the curve. How may I assist you today, Sir?”"""
+            "Greetings. I am J.A.R.V.I.S., Just A Rather Very Intelligent System – "
+            "your personal AI assistant, designed to simplify tasks, answer queries, "
+            "and keep you ahead of the curve. How may I assist you today, Sir?"
         )
         say(introduction)
         print(introduction)
@@ -160,13 +161,7 @@ if __name__ == '__main__':
         say("Hello Sir, I am Jarvis. How can I help you today?")
         while True:
             query = takeCommand()
-            # todo: Add more sites
-            sites = [["youtube", "https://www.youtube.com"], ["wikipedia", "https://www.wikipedia.com"], ["google", "https://www.google.com"],]
-            for site in sites:
-                if f"Open {site[0]}".lower() in query.lower():
-                    say(f"Opening {site[0]} sir...")
-                    webbrowser.open(site[1])
-
+            # Handle commands
             if "play music" in query.lower():
                 playMusic("back_in_black_intro.mp3")
 
@@ -185,29 +180,29 @@ if __name__ == '__main__':
                     say("Sorry, I couldn't fetch the time.")
                     print(f"Error fetching time: {e}")
 
-            elif "open facetime".lower() in query.lower():
+            elif "open facetime" in query.lower():
                 try:
-                    os.system(f"open /System/Applications/FaceTime.app")
+                    os.system("open /System/Applications/FaceTime.app")
                 except Exception as e:
                     say("Sorry, I couldn't open FaceTime.")
                     print(f"Error opening FaceTime: {e}")
 
-            elif "open pass".lower() in query.lower():
+            elif "open pass" in query.lower():
                 try:
-                    os.system(f"open /Applications/Passky.app")
+                    os.system("open /Applications/Passky.app")
                 except Exception as e:
                     say("Sorry, I couldn't open Passky.")
                     print(f"Error opening Passky: {e}")
 
-            elif "Using artificial intelligence".lower() in query.lower():
+            elif "using artificial intelligence" in query.lower():
                 ai(prompt=query)
 
-            elif "Jarvis Quit".lower() in query.lower():
+            elif "jarvis quit" in query.lower():
                 say("Goodbye, Sir.")
                 cleanup()
                 exit()
 
-            elif "reset chat".lower() in query.lower():
+            elif "reset chat" in query.lower():
                 chatStr = ""
                 say("Chat history has been reset.")
 
