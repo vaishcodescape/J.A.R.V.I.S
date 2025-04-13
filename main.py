@@ -5,7 +5,8 @@ import webbrowser
 import openai
 from config import apikey
 import datetime
-import pygame  # For music functionality
+import pygame
+import threading
 
 # Initialize pygame mixer
 try:
@@ -14,56 +15,7 @@ except Exception as e:
     print(f"Error initializing pygame mixer: {e}")
 
 chatStr = ""
-
-def chat(query):
-    """Handles chat functionality using OpenAI."""
-    global chatStr
-    try:
-        print(chatStr)
-        openai.api_key = apikey
-        chatStr += f"Sir: {query}\n Jarvis: "
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=chatStr,
-            temperature=0.7,
-            max_tokens=256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        response_text = response["choices"][0]["text"]
-        say(response_text)
-        chatStr += f"{response_text}\n"
-        return response_text
-    except Exception as e:
-        say("Sorry, I encountered an error while processing your request.")
-        print(f"Error in chat function: {e}")
-        return "Error occurred in chat."
-
-def ai(prompt):
-    """Handles AI-based responses using OpenAI."""
-    try:
-        openai.api_key = apikey
-        text = f"OpenAI response for Prompt: {prompt} \n *************************\n\n"
-
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=prompt,
-            temperature=0.7,
-            max_tokens=256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
-        )
-        text += response["choices"][0]["text"]
-        if not os.path.exists("Openai"):
-            os.mkdir("Openai")
-
-        with open(f"Openai/{''.join(prompt.split('intelligence')[1:]).strip()}.txt", "w") as f:
-            f.write(text)
-    except Exception as e:
-        say("Sorry, I encountered an error while processing your AI request.")
-        print(f"Error in ai function: {e}")
+is_listening = True  # Global flag to control listening
 
 def say(text):
     """Uses the system's text-to-speech functionality."""
@@ -74,13 +26,13 @@ def say(text):
 
 def takeCommand():
     """Listens to the user's voice command and converts it to text."""
-    r = sr.Recognizer()
+    recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         try:
             print("Listening...")
-            audio = r.listen(source)
+            audio = recognizer.listen(source)
             print("Recognizing...")
-            query = r.recognize_google(audio, language="en-in")
+            query = recognizer.recognize_google(audio, language="en-in")
             print(f"User said: {query}")
             return query
         except sr.UnknownValueError:
@@ -98,15 +50,12 @@ def takeCommand():
 def playMusic(song_name):
     """Plays the specified music file from the 'music' directory."""
     try:
-        # Define the path to the music directory
-        music_directory = os.path.join(os.getcwd(), "/Users/avaish/J.A.R.V.I.S/music")
-        song_path = os.path.join("/Users/avaish/J.A.R.V.I.S/music", "/Users/avaish/J.A.R.V.I.S/music/back_in_black_intro.mp3")
+        music_directory = os.path.join(os.getcwd(), "music")
+        song_path = os.path.join(music_directory, song_name)
 
-        # Check if the file exists
         if not os.path.exists(song_path):
             raise FileNotFoundError(f"The file {song_name} does not exist in the 'music' directory.")
 
-        # Load and play the music
         pygame.mixer.music.load(song_path)
         pygame.mixer.music.play()
         say("Playing music, sir.")
@@ -135,8 +84,8 @@ def stopMusic():
 def cleanup():
     """Stops the music and performs cleanup before exiting."""
     try:
-        pygame.mixer.music.stop()  # Stop any playing music
-        pygame.mixer.quit()  # Quit the pygame mixer
+        pygame.mixer.music.stop()
+        pygame.mixer.quit()
         print("Cleanup completed. Exiting program.")
     except Exception as e:
         print(f"Error during cleanup: {e}")
@@ -155,61 +104,96 @@ def introduceYourself():
         say("Sorry, I encountered an error while introducing myself.")
         print(f"Error in introduceYourself function: {e}")
 
-if __name__ == '__main__':
+def chat(query):
+    """Handles chat functionality using OpenAI."""
+    global chatStr
     try:
-        print('Welcome to Jarvis A.I')
-        say("Hello Sir, I am Jarvis. How can I help you today?")
-        while True:
+        openai.api_key = apikey
+        chatStr += f"Sir: {query}\n Jarvis: "
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=chatStr,
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        response_text = response["choices"][0]["text"]
+        say(response_text)
+        chatStr += f"{response_text}\n"
+        return response_text
+    except Exception as e:
+        say("Sorry, I encountered an error while processing your request.")
+        print(f"Error in chat function: {e}")
+        return "Error occurred in chat."
+
+def ai(prompt):
+    """Handles AI-based responses using OpenAI."""
+    try:
+        openai.api_key = apikey
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        text = response["choices"][0]["text"]
+        if not os.path.exists("Openai"):
+            os.mkdir("Openai")
+        with open(f"Openai/{prompt[:50].strip().replace(' ', '_')}.txt", "w") as f:
+            f.write(text)
+    except Exception as e:
+        say("Sorry, I encountered an error while processing your AI request.")
+        print(f"Error in ai function: {e}")
+
+def listenForCommands():
+    """Continuously listens for commands in a separate thread."""
+    global is_listening
+    while True:
+        if is_listening:
             query = takeCommand()
-            # Handle commands
+
             if "play music" in query.lower():
                 playMusic("back_in_black_intro.mp3")
-
             elif "stop music" in query.lower():
                 stopMusic()
-
             elif "introduce yourself" in query.lower():
                 introduceYourself()
-
-            elif "the time" in query:
+            elif "the time" in query.lower():
                 try:
-                    hour = datetime.datetime.now().strftime("%H")
-                    minute = datetime.datetime.now().strftime("%M")
-                    say(f"Sir, the time is {hour} hours and {minute} minutes.")
+                    now = datetime.datetime.now()
+                    say(f"Sir, the time is {now.strftime('%H')} hours and {now.strftime('%M')} minutes.")
                 except Exception as e:
                     say("Sorry, I couldn't fetch the time.")
                     print(f"Error fetching time: {e}")
-
             elif "open facetime" in query.lower():
-                try:
-                    os.system("open /System/Applications/FaceTime.app")
-                except Exception as e:
-                    say("Sorry, I couldn't open FaceTime.")
-                    print(f"Error opening FaceTime: {e}")
-
+                os.system("open /System/Applications/FaceTime.app")
             elif "open pass" in query.lower():
-                try:
-                    os.system("open /Applications/Passky.app")
-                except Exception as e:
-                    say("Sorry, I couldn't open Passky.")
-                    print(f"Error opening Passky: {e}")
-
+                os.system("open /Applications/Passky.app")
             elif "using artificial intelligence" in query.lower():
                 ai(prompt=query)
-
             elif "jarvis quit" in query.lower():
                 say("Goodbye, Sir.")
                 cleanup()
                 exit()
-
             elif "reset chat" in query.lower():
+                global chatStr
                 chatStr = ""
                 say("Chat history has been reset.")
-
             else:
-                print("Chatting...")
                 chat(query)
 
+if __name__ == '__main__':
+    try:
+        print('Welcome to Jarvis A.I')
+        say("Hello Sir, I am Jarvis. How can I help you today?")
+        threading.Thread(target=listenForCommands, daemon=True).start()
+        while True:
+            pass
     except KeyboardInterrupt:
         say("Goodbye, Sir.")
         cleanup()
