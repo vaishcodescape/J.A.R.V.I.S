@@ -96,15 +96,24 @@ def takeCommand():
             print(f"Error in takeCommand function: {e}")
             return "Some error occurred."
 
-def playMusic(song_path):
-    """Plays the specified music file."""
+def playMusic(song_name):
+    """Plays the specified music file from the 'music' directory."""
     try:
+        # Define the path to the music directory
+        music_directory = os.path.join(os.getcwd(), "music")  # Ensure 'music' folder exists in the current directory
+        song_path = os.path.join("music","music/back_in_black_intro.mp3")  # Combine directory and song name to form full path
+
+        # Check if the file exists
+        if not os.path.exists(song_path):
+            raise FileNotFoundError(f"The file {song_name} does not exist in the 'music' directory.")
+
+        # Load and play the music
         pygame.mixer.music.load(song_path)
         pygame.mixer.music.play()
         say("Playing music, sir.")
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         say("Sorry, the music file was not found.")
-        print(f"File not found: {song_path}")
+        print(f"File not found: {e}")
     except pygame.error as e:
         say("Sorry, I couldn't play the music.")
         print(f"Pygame error: {e}")
@@ -153,7 +162,7 @@ if __name__ == '__main__':
                     webbrowser.open(site[1])
 
             if "play music" in query.lower():
-                playMusic("music/back_in_black_intro.mp3")
+                playMusic("back_in_black_intro.mp3")
 
             elif "stop music" in query.lower():
                 stopMusic()
