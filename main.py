@@ -105,23 +105,28 @@ def introduceYourself():
         print(f"Error in introduceYourself function: {e}")
 
 def chat(query):
-    """Handles chat functionality using OpenAI."""
+    """Handles chat functionality using OpenAI GPT-3.5 Turbo."""
     global chatStr
     try:
         openai.api_key = apikey
-        chatStr += f"Sir: {query}\n Jarvis: "
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=chatStr,
-            temperature=0.7,
-            max_tokens=256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
+        chat_history = [{"role": "system", "content": "You are J.A.R.V.I.S, a helpful AI assistant."}]
+        
+         
+        for line in chatStr.strip().split('\n'):
+            if line.startswith("Sir:"):
+                chat_history.append({"role": "user", "content": line.replace("Sir: ", "")})
+            elif line.startswith("Jarvis:"):
+                chat_history.append({"role": "assistant", "content": line.replace("Jarvis: ", "")})
+
+        chat_history.append({"role": "user", "content": query})
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=chat_history
         )
-        response_text = response["choices"][0]["text"]
+        response_text = response["choices"][0]["message"]["content"].strip()
         say(response_text)
-        chatStr += f"{response_text}\n"
+        chatStr += f"Sir: {query}\nJarvis: {response_text}\n"
         return response_text
     except Exception as e:
         say("Sorry, I encountered an error while processing your request.")
