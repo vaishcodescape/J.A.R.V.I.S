@@ -1,2 +1,2 @@
 # todo: Add your api key here
-apikey = ""
+apikey = "Add your API key here"
