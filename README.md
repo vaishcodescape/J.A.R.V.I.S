@@ -1,4 +1,3 @@
-"""
 # 🤖 J.A.R.V.I.S A.I Speech Assistant
 
 A voice-activated desktop assistant inspired by JARVIS from Iron Man. Built in Python and powered by OpenAI GPT-3, it listens, speaks, chats, opens websites, and more.
