@@ -10,7 +10,7 @@ A voice-activated desktop assistant inspired by JARVIS from Iron Man. Built in P
 ## 🔧 Features
 - Voice recognition using `speech_recognition`
 - Text-to-speech response (macOS `say` command)
-- Chat using GPT-3 (`text-davinci-003`)
+- Chat using GPT-3.5 (`Turbo`)
 - Opens common websites (YouTube, Google, Wikipedia)
 - Tells the time, plays music, launches apps
 - Saves AI-generated content to files
