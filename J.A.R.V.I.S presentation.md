@@ -126,7 +126,7 @@ os.system(f'say "{text}"')
 🤖: *"Opening YouTube, sir..."*
 
 👤: *"What's the time?"*  
-🤖: *"Sir, the time is 16 bajke 30 minutes."*
+🤖: *"Sir, the time is 16 hours 30 minutes."*
 
 👤: *"Using artificial intelligence, explain black holes."*  
 🤖: *(OpenAI generates a full answer and saves it to file)*
