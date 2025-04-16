@@ -132,28 +132,33 @@ def chat(query):
         say("Sorry, I encountered an error while processing your request.")
         print(f"Error in chat function: {e}")
         return "Error occurred in chat."
-
+    
 def ai(prompt):
-    """Handles AI-based responses using OpenAI."""
     try:
         openai.api_key = apikey
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=prompt,
-            temperature=0.7,
-            max_tokens=256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are J.A.R.V.I.S, a helpful AI assistant."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        text = response["choices"][0]["text"]
+        text = response["choices"][0]["message"]["content"].strip()
+
+        # Speak and print the response
+        say(text)
+        print("JARVIS:", text)
+
+        # Save to file safely
+        filename = "".join(c if c.isalnum() or c in (' ', '_') else '_' for c in prompt[:50])
         if not os.path.exists("Openai"):
             os.mkdir("Openai")
-        with open(f"Openai/{prompt[:50].strip().replace(' ', '_')}.txt", "w") as f:
+        with open(f"Openai/{filename}.txt", "w", encoding="utf-8") as f:
             f.write(text)
     except Exception as e:
         say("Sorry, I encountered an error while processing your AI request.")
         print(f"Error in ai function: {e}")
+        print(f"Prompt was: {prompt}")
 
 def listenForCommands():
     """Continuously listens for commands in a separate thread."""
